@@ -1,5 +1,5 @@
 [readme_md.md](https://github.com/user-attachments/files/33927854/readme_md.md)
-# 🚀 StockVision Enterprise Banking & AI Auto-Trader Engine v5.0
+#  StockVision Enterprise Banking & AI Auto-Trader Engine v5.0
 
 Ein hochmodernes, modulares Web-Dashboard für KI-gestütztes Autotrading, Risiko-Governance, Sandbox-Banking und Echtzeit-Marktanalysen.
 
@@ -9,7 +9,7 @@ Ein hochmodernes, modulares Web-Dashboard für KI-gestütztes Autotrading, Risik
 
 ---
 
-## 📋 Inhaltsverzeichnis
+##  Inhaltsverzeichnis
 
 - [Features](#-features)
 - [Projektstruktur](#-projektstruktur)
@@ -22,32 +22,32 @@ Ein hochmodernes, modulares Web-Dashboard für KI-gestütztes Autotrading, Risik
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🛡️ 1. Auth & Benutzerverwaltung (Modul `AuthManager`)
+###  1. Auth & Benutzerverwaltung (Modul `AuthManager`)
 * **Session-Verwaltung:** Login / Registrierung mit Verschlüsselungs-Simulation und JWT-Token-Verwaltung.
 * **Persistenz:** Automatische Speicherung des Sitzungsstatus in `localStorage`.
 
-### 🤖 2. KI Autotrading & Governance Engine (Modul `AutoTrader`)
+###  2. KI Autotrading & Governance Engine (Modul `AutoTrader`)
 * **Unantastbare Reserve (Hard Limit):** Stoppt jeglichen Handel automatisch, wenn das Gesamtkapital das eingestellte Mindestlimit erreicht.
 * **Dynamische Risikoklassen:** Konservativ, Ausgewogen und Aggressiv mit angepassten TP/SL-Verhältnissen.
 * **Dual-KI Bestätigung:** Zweistufige Signalvalidierung vor Positionseröffnung.
 
-### 💳 3. Banking Sandbox & Gateway (Modul `BankingGateway`)
+###  3. Banking Sandbox & Gateway (Modul `BankingGateway`)
 * **Card Isolation Protocol:** Strikte Trennung zwischen Bankkarte und Trading Vault. Die KI hat keinen Direktzugriff auf Karten- oder IBAN-Daten.
 * **Transaktions-Ledger:** Vollständige Protokollierung von Ein- und Auszahlungen.
 
-### 📊 4. KI Signal Screener (Modul `AIScreener`)
+###  4. KI Signal Screener (Modul `AIScreener`)
 * **Live-Scanner:** Durchsucht kontinuierlich Assets (Aktien, Crypto, FX) nach Chartmustern.
 * **Manuelle Auslösung:** Direkte Handelsausführung aus der Signalübersicht.
 
-### 📜 5. Order Historie & Speicher-Engine (Modul `OrderHistory`)
+###  5. Order Historie & Speicher-Engine (Modul `OrderHistory`)
 * **Lückenlose Aufzeichnung:** Speicherung aller geschlossenen Trades (Gewinn/Verlust, Ausstiegsparameter).
 * **Persistenter Speicher:** Alle Daten bleiben auch nach dem Neuladen der Seite erhalten.
 
 ---
 
-## 📁 Projektstruktur
+##  Projektstruktur
 
 Für GitHub ist das Projekt so konzipiert, dass das gesamte System nahtlos ohne komplexe Build-Schritte direkt über **GitHub Pages** oder einen Standard-Webserver ausgeführt werden kann:
 
@@ -61,7 +61,7 @@ stockvision-enterprise/
 
 ---
 
-## 🚀 Schnellstart
+##  Schnellstart
 
 ### 1. Repository klonen
 ```bash
@@ -77,7 +77,7 @@ Da das Projekt in purem HTML5/JavaScript mit Tailwind CDN geschrieben ist, benö
 
 ---
 
-## 🏗️ Architektur & Module
+##  Architektur & Module
 
 Das Frontend verwendet ein sauberes **JavaScript Enterprise Pattern** mit separaten Modulen:
 
@@ -92,7 +92,7 @@ Das Frontend verwendet ein sauberes **JavaScript Enterprise Pattern** mit separa
 
 ---
 
-## 🔒 Sicherheitskonzept (Card Sandbox)
+##  Sicherheitskonzept (Card Sandbox)
 
 Das System setzt auf ein zweistufiges Sicherheitsmodell:
 1. **Deposit Vault Isolation:** Trades werden ausschließlich mit Beträgen ausgeführt, die aktiv in den Trading Vault geladen wurden.
@@ -100,7 +100,7 @@ Das System setzt auf ein zweistufiges Sicherheitsmodell:
 
 ---
 
-## 🌐 WebSocket & Server Integration
+##  WebSocket & Server Integration
 
 Das Dashboard beinhaltet ein integriertes WebSocket-Modul zur einfachen Anbindung an reale Börsen-WebSockets (z. B. Binance, TradingView Webhooks oder Node.js Backends):
 
@@ -111,6 +111,6 @@ WebSocketClient.connect('wss://dein-backend-server.com/ws/live-feed');
 
 ---
 
-## 📄 Lizenz
+##  Lizenz
 
 Dieses Projekt ist unter der **MIT-Lizenz** lizensiert.
