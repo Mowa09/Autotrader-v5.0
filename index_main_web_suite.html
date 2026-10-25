@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockVision Enterprise Banking & AI Auto-Trader Engine v5.0</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        tvDarkBg: '#000000',
+                        tvCardBg: '#0B0E14',
+                        tvHeaderBg: '#05070A',
+                        tvBorder: '#1E222D',
+                        tvHover: '#161A25',
+                        tvAccent: '#2962FF',
+                        tvBullish: '#00E676',
+                        tvBearish: '#FF1744',
+                        tvTextMuted: '#787B86',
+                        tvTextBright: '#D1D4DC',
+                        tvGold: '#FFD700'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #000000; color: #D1D4DC; font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #000000; }
+        ::-webkit-scrollbar-thumb { background: #1E222D; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2A2E39; }
+        @keyframes pulseGlow { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.95); } }
+        .live-dot { animation: pulseGlow 1.5s infinite; }
+        .log-terminal { font-family: 'Courier New', Courier, monospace; background-color: #030508; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-tvDarkBg select-none overflow-x-hidden">
+
+    <!-- AUTH MODAL (LOGIN / REGISTER) -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-tvCardBg border border-tvBorder rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 bg-tvAccent/20 border border-tvAccent/40 rounded-full flex items-center justify-center mx-auto text-tvAccent text-xl mb-2">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h2 class="text-lg font-bold text-white tracking-wide">STOCKVISION ENTERPRISE</h2>
+                <p class="text-xs text-tvTextMuted">Melden Sie sich an, um Zugriff auf die KI Trading Engine zu erhalten.</p>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-tvTextMuted text-[10px] uppercase font-bold mb-1">E-Mail Adresse / Username</label>
+                    <input type="text" id="auth-email" value="trader@enterprise.com" class="w-full bg-black border border-tvBorder rounded p-2.5 text-white focus:outline-none focus:border-tvAccent">
+                </div>
+                <div>
+                    <label class="block text-tvTextMuted text-[10px] uppercase font-bold mb-1">Passwort</label>
+                    <input type="password" id="auth-password" value="••••••••••••" class="w-full bg-black border border-tvBorder rounded p-2.5 text-white focus:outline-none focus:border-tvAccent">
+                </div>
+                <button onclick="AuthManager.login()" class="w-full bg-tvAccent hover:bg-blue-600 text-white font-bold py-2.5 rounded transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Anmelden / Enterprise Account</span>
+                </button>
+            </div>
+            <div class="text-center text-[10px] text-tvTextMuted">
+                <i class="fa-solid fa-lock mr-1 text-emerald-400"></i> Ende-zu-Ende verschlüsselte lokale Sitzung
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header class="bg-tvHeaderBg border-b border-tvBorder sticky top-0 z-40 text-xs">
+        <div class="px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-emerald-500/10 border border-emerald-500/30 text-tvBullish font-black px-2.5 py-1 rounded text-xs tracking-wider flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-tvBullish mr-2 live-dot"></span>
+                        STOCKVISION <span class="text-white ml-1.5 text-[10px] bg-blue-950/80 text-blue-300 px-1.5 py-0.5 rounded border border-blue-800">v5.0 ENTERPRISE</span>
+                    </div>
+                </div>
+
+                <nav class="hidden md:flex items-center space-x-1 border-l border-tvBorder pl-3 text-xs">
+                    <button onclick="Navigation.switchTab('bot')" id="nav-bot" class="px-2.5 py-1 rounded bg-tvAccent text-white font-medium flex items-center">
+                        <i class="fa-solid fa-robot mr-1.5"></i> Autotrading & Depot
+                    </button>
+                    <button onclick="Navigation.switchTab('card')" id="nav-card" class="px-2.5 py-1 rounded hover:bg-tvHover text-tvTextBright font-medium flex items-center">
+                        <i class="fa-solid fa-credit-card mr-1.5 text-amber-400"></i> Bankkarte & Gateway
+                    </button>
+                    <button onclick="Navigation.switchTab('screener')" id="nav-screener" class="px-2.5 py-1 rounded hover:bg-tvHover text-tvTextBright font-medium flex items-center">
+                        <i class="fa-solid fa-chart-line mr-1.5 text-tvAccent"></i> KI Screener
+                    </button>
+                    <button onclick="Navigation.switchTab('history')" id="nav-history" class="px-2.5 py-1 rounded hover:bg-tvHover text-tvTextBright font-medium flex items-center">
+                        <i class="fa-solid fa-clock-rotate-left mr-1.5 text-purple-400"></i> Order Historie
+                    </button>
+                </nav>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div id="ws-status-badge" class="hidden md:flex items-center space-x-1 text-[10px] bg-black px-2 py-1 rounded border border-tvBorder">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span class="text-tvTextMuted">WS Feed: Live</span>
+                </div>
+
+                <button onclick="Navigation.switchTab('card')" id="header-card-badge" class="bg-tvCardBg hover:bg-tvHover border border-tvBorder text-white px-2.5 py-1 rounded text-xs transition flex items-center space-x-2">
+                    <i class="fa-solid fa-shield-cat text-emerald-400"></i>
+                    <span id="header-card-text" class="text-[11px] font-mono">Keine Karte verbunden</span>
+                </button>
+
+                <button id="btn-toggle-bot" onclick="AutoTrader.toggle()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs transition flex items-center shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-power-off mr-1.5" id="bot-power-icon"></i>
+                    <span id="bot-status-text">AUTOTRADER: AKTIV</span>
+                </button>
+
+                <button onclick="AuthManager.logout()" class="text-tvTextMuted hover:text-white px-2 py-1 rounded border border-tvBorder hover:bg-tvHover">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow p-3 md:p-4 max-w-[1920px] mx-auto w-full flex flex-col space-y-3">
+
+        <!-- TAB 1: AUTOTRADING DASHBOARD -->
+        <div id="view-bot" class="space-y-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+                <div class="bg-tvCardBg border border-tvBorder p-3 rounded-lg space-y-1">
+                    <div class="text-[10px] text-tvTextMuted uppercase font-bold flex justify-between">
+                        <span>Gesamtkapital</span>
+                        <i class="fa-solid fa-vault text-tvAccent"></i>
+                    </div>
+                    <div id="stat-total-equity" class="text-base font-extrabold text-white font-mono">$0.00</div>
+                    <div class="text-[10px] text-tvTextMuted">Depotwert inkl. Positionen</div>
+                </div>
+
+                <div class="bg-tvCardBg border border-tvBorder p-3 rounded-lg space-y-1">
+                    <div class="text-[10px] text-tvTextMuted uppercase font-bold flex justify-between">
+                        <span>Trading Deposit</span>
+                        <i class="fa-solid fa-wallet text-amber-400"></i>
+                    </div>
+                    <div id="stat-free-deposit" class="text-base font-extrabold text-amber-400 font-mono">$0.00</div>
+                    <div class="text-[10px] text-tvTextMuted">Verfügbar für KI-Trades</div>
+                </div>
+
+                <div class="bg-tvCardBg border border-tvBorder p-3 rounded-lg space-y-1">
+                    <div class="text-[10px] text-tvTextMuted uppercase font-bold flex justify-between">
+                        <span>Unantastbare Reserve</span>
+                        <i class="fa-solid fa-shield-cat text-emerald-400"></i>
+                    </div>
+                    <div id="stat-reserve-limit" class="text-base font-extrabold text-emerald-400 font-mono">$0.00</div>
+                    <div class="text-[10px] text-tvTextMuted">Hard Reserve Stop</div>
+                </div>
+
+                <div class="bg-tvCardBg border border-tvBorder p-3 rounded-lg space-y-1">
+                    <div class="text-[10px] text-tvTextMuted uppercase font-bold flex justify-between">
+                        <span>Investiertes Kapital</span>
+                        <i class="fa-solid fa-chart-pie text-purple-400"></i>
+                    </div>
+                    <div id="stat-invested" class="text-base font-extrabold text-purple-300 font-mono">$0.00</div>
+                    <div class="text-[10px] text-tvTextMuted"><span id="stat-open-count" class="text-white font-bold">0</span> Positionen</div>
+                </div>
+
+                <div class="bg-tvCardBg border border-tvBorder p-3 rounded-lg space-y-1">
+                    <div class="text-[10px] text-tvTextMuted uppercase font-bold flex justify-between">
+                        <span>Unrealisierter P&L</span>
+                        <i class="fa-solid fa-wave-square text-blue-400"></i>
+                    </div>
+                    <div id="stat-unrealized-pnl" class="text-base font-extrabold text-white font-mono">$0.00</div>
+                    <div class="text-[10px] text-tvTextMuted">Offene Trades Schwankung</div>
+                </div>
+
+                <div class="bg-tvCardBg border border-tvBorder p-3 rounded-lg space-y-1">
+                    <div class="text-[10px] text-tvTextMuted uppercase font-bold flex justify-between">
+                        <span>Realisiertes P&L</span>
+                        <i class="fa-solid fa-sack-dollar text-tvBullish"></i>
+                    </div>
+                    <div id="stat-realized-pnl" class="text-base font-extrabold text-tvBullish font-mono">+$0.00</div>
+                    <div class="text-[10px] text-tvTextMuted">Geschlossener Gewinn</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+                <div class="lg:col-span-4 bg-tvCardBg border border-tvBorder rounded-lg p-3.5 space-y-3">
+                    <div class="flex justify-between items-center pb-2 border-b border-tvBorder">
+                        <h3 class="text-xs font-bold text-white flex items-center">
+                            <i class="fa-solid fa-sliders text-tvAccent mr-2"></i> KI Governance & Risiko
+                        </h3>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="bg-black/60 border border-emerald-900/60 p-2.5 rounded-lg space-y-1.5">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] font-bold text-white flex items-center">
+                                    <i class="fa-solid fa-shield-halved text-emerald-400 mr-1.5"></i> Reserve Protection ($)
+                                </label>
+                                <span id="cfg-reserve-val-disp" class="text-emerald-400 font-mono font-bold">$3,000.00</span>
+                            </div>
+                            <input type="range" id="cfg-reserve-limit" min="0" max="15000" step="250" value="3000" oninput="AutoTrader.updateReserveLimit(this.value)" class="w-full accent-emerald-500 h-1.5 bg-tvBorder rounded cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-tvTextMuted text-[10px] mb-1">
+                                <span>Min. KI Signal-Konfidenz:</span>
+                                <span id="cfg-prob-val" class="text-tvAccent font-bold font-mono">80%</span>
+                            </div>
+                            <input type="range" id="cfg-prob" min="60" max="95" value="80" oninput="document.getElementById('cfg-prob-val').innerText = this.value + '%'" class="w-full accent-tvAccent h-1.5 bg-tvBorder rounded cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-tvTextMuted text-[10px] mb-1">
+                                <span>Einsatz pro Trade (% Vault Deposit):</span>
+                                <span id="cfg-risk-val" class="text-amber-400 font-bold font-mono">5.0%</span>
+                            </div>
+                            <input type="range" id="cfg-risk" min="1" max="25" value="5" oninput="document.getElementById('cfg-risk-val').innerText = this.value + '.0%'" class="w-full accent-amber-400 h-1.5 bg-tvBorder rounded cursor-pointer">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] text-tvTextMuted uppercase font-bold mb-1">Strategie & Risikoklasse</label>
+                            <select id="cfg-risk-class" class="w-full bg-black border border-tvBorder rounded p-2 text-white font-medium text-xs focus:outline-none focus:border-tvAccent">
+                                <option value="CONSERVATIVE">Konservativ (Safe TP / Tight SL)</option>
+                                <option value="BALANCED" selected>Ausgewogen (Standard 2:1 RR)</option>
+                                <option value="AGGRESSIVE">Aggressiv (Dynamische Ausbrüche)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8 bg-tvCardBg border border-tvBorder rounded-lg p-3.5 flex flex-col justify-between">
+                    <div class="flex justify-between items-center pb-2 border-b border-tvBorder">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-terminal text-purple-400"></i>
+                            <h3 class="text-xs font-bold text-white">Echtzeit KI-Execution Terminal</h3>
+                        </div>
+                        <button onclick="Logger.clear()" class="text-tvTextMuted hover:text-white text-[11px]">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Clear
+                        </button>
+                    </div>
+
+                    <div id="bot-terminal-logs" class="log-terminal my-2 p-3 rounded-lg border border-tvBorder/80 h-64 overflow-y-auto text-[11px] space-y-1.5 text-tvTextBright">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Positions Table -->
+            <div class="bg-tvCardBg border border-tvBorder rounded-lg p-3.5 space-y-3">
+                <div class="flex justify-between items-center pb-2 border-b border-tvBorder">
+                    <h3 class="text-xs font-bold text-white">Aktive Positionen im Deposit Vault</h3>
+                    <button onclick="AutoTrader.closeAll()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 px-2.5 py-1 rounded text-[11px] font-bold">
+                        Alle Schließen
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-black text-tvTextMuted text-[10px] uppercase font-bold border-b border-tvBorder">
+                            <tr>
+                                <th class="py-2.5 px-3">Asset</th>
+                                <th class="py-2.5 px-3">Typ</th>
+                                <th class="py-2.5 px-3 text-right">Einstieg</th>
+                                <th class="py-2.5 px-3 text-right">Aktuell</th>
+                                <th class="py-2.5 px-3 text-right">Einsatz</th>
+                                <th class="py-2.5 px-3 text-right">TP / SL</th>
+                                <th class="py-2.5 px-3 text-right">Unrealisiert P&L</th>
+                                <th class="py-2.5 px-3 text-center">Aktion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="open-positions-tbody" class="divide-y divide-tvBorder/60 font-mono">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: BANK CARD GATEWAY -->
+        <div id="view-card" class="hidden space-y-3">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+                <div class="lg:col-span-5 bg-tvCardBg border border-tvBorder rounded-lg p-4 space-y-4">
+                    <h3 class="text-sm font-bold text-white border-b border-tvBorder pb-2">Bankkarten Sandbox Gateway</h3>
+                    <div class="bg-gradient-to-tr from-slate-900 via-blue-950 to-slate-900 border border-blue-500/40 rounded-xl p-4 text-white space-y-4 shadow-xl">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold tracking-widest text-blue-300">ENTERPRISE GATEWAY</span>
+                            <i class="fa-brands fa-cc-visa text-2xl"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="text-[9px] text-blue-300 uppercase">Kartennummer / IBAN</div>
+                            <div id="card-display-num" class="font-mono text-base tracking-wider text-amber-300">•••• •••• •••• 8842</div>
+                        </div>
+                    </div>
+                    <div class="space-y-3 text-xs">
+                        <input type="text" id="card-input-name" value="Max Mustermann" class="w-full bg-black border border-tvBorder rounded p-2 text-white">
+                        <input type="text" id="card-input-num" value="DE89 3704 0044 0532 0130 00" class="w-full bg-black border border-tvBorder rounded p-2 text-white font-mono">
+                        <button onclick="BankingGateway.saveCard()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded">Karte Verbinden</button>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 bg-tvCardBg border border-tvBorder rounded-lg p-4 space-y-4">
+                    <h3 class="text-sm font-bold text-white border-b border-tvBorder pb-2">Bank Ledger Transaktionen</h3>
+                    <div class="overflow-y-auto max-h-60 border border-tvBorder rounded">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-black text-tvTextMuted text-[10px] uppercase">
+                                <tr>
+                                    <th class="py-2 px-3">Zeit</th>
+                                    <th class="py-2 px-3">Typ</th>
+                                    <th class="py-2 px-3 text-right">Betrag</th>
+                                </tr>
+                            </thead>
+                            <tbody id="card-ledger-tbody" class="divide-y divide-tvBorder/60 font-mono">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: KI SCREENER -->
+        <div id="view-screener" class="hidden space-y-3">
+            <div class="bg-tvCardBg border border-tvBorder rounded-lg p-3.5 space-y-3">
+                <h3 class="text-xs font-bold text-white border-b border-tvBorder pb-2">KI Signal Screener Pool</h3>
+                <div class="overflow-y-auto max-h-[60vh] border border-tvBorder rounded">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-black text-tvTextMuted text-[10px] uppercase">
+                            <tr>
+                                <th class="py-2 px-3">Asset</th>
+                                <th class="py-2 px-3">Muster</th>
+                                <th class="py-2 px-3 text-right">Kurs</th>
+                                <th class="py-2 px-3 text-center">Signal</th>
+                                <th class="py-2 px-3 text-right">Konfidenz</th>
+                            </tr>
+                        </thead>
+                        <tbody id="screener-tbody" class="divide-y divide-tvBorder/60 font-mono">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: ORDER HISTORIE -->
+        <div id="view-history" class="hidden space-y-3">
+            <div class="bg-tvCardBg border border-tvBorder rounded-lg p-3.5 space-y-3">
+                <h3 class="text-xs font-bold text-white border-b border-tvBorder pb-2">Geschlossene Orders</h3>
+                <div class="overflow-x-auto border border-tvBorder rounded">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-black text-tvTextMuted text-[10px] uppercase">
+                            <tr>
+                                <th class="py-2 px-3">Zeit</th>
+                                <th class="py-2 px-3">Asset</th>
+                                <th class="py-2 px-3 text-right">Einstieg</th>
+                                <th class="py-2 px-3 text-right">Ausstieg</th>
+                                <th class="py-2 px-3 text-right">P&L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody" class="divide-y divide-tvBorder/60 font-mono">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ARCHITECTURE MODULE ENGINE (ENTERPRISE JAVASCRIPT SYSTEM) -->
+    <script>
+        // STATE STORE MODULE (PERSISTENT STORAGE)
+        const StateStore = {
+            key: 'STOCKVISION_V5_STATE',
+            data: {
+                user: null,
+                portfolio: { deposit: 10000.00, invested: 0.00, realizedPnL: 0.00, reserveLimit: 3000.00 },
+                card: { connected: true, holderName: "Max Mustermann", cardNumber: "DE89 3704 0044 0532 0130 00" },
+                positions: [],
+                history: [],
+                ledger: []
+            },
+            init() {
+                const saved = localStorage.getItem(this.key);
+                if (saved) {
+                    try { this.data = JSON.parse(saved); } catch (e) { console.error(e); }
+                }
+            },
+            save() {
+                localStorage.setItem(this.key, JSON.stringify(this.data));
+            }
+        };
+
+        // LOGGER MODULE
+        const Logger = {
+            log(tag, msg, colorClass = 'text-tvTextBright') {
+                const logsContainer = document.getElementById('bot-terminal-logs');
+                if (!logsContainer) return;
+                const time = new Date().toLocaleTimeString();
+                const line = document.createElement('div');
+                line.className = 'leading-relaxed font-mono';
+                line.innerHTML = `<span class="text-tvTextMuted">[${time}]</span> <span class="bg-tvBorder text-white px-1 rounded text-[9px] font-bold mr-1.5">${tag}</span> <span class="${colorClass}">${msg}</span>`;
+                logsContainer.appendChild(line);
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            },
+            clear() {
+                document.getElementById('bot-terminal-logs').innerHTML = '';
+            }
+        };
+
+        // NAVIGATION MODULE
+        const Navigation = {
+            switchTab(tabId) {
+                ['bot', 'card', 'screener', 'history'].forEach(id => {
+                    document.getElementById(`view-${id}`).classList.add('hidden');
+                    document.getElementById(`nav-${id}`).className = "px-2.5 py-1 rounded hover:bg-tvHover text-tvTextBright font-medium flex items-center";
+                });
+                document.getElementById(`view-${tabId}`).classList.remove('hidden');
+                document.getElementById(`nav-${tabId}`).className = "px-2.5 py-1 rounded bg-tvAccent text-white font-medium flex items-center";
+            }
+        };
+
+        // AUTHENTICATION MANAGER MODULE
+        const AuthManager = {
+            init() {
+                if (StateStore.data.user) {
+                    document.getElementById('auth-modal').classList.add('hidden');
+                }
+            },
+            login() {
+                const email = document.getElementById('auth-email').value;
+                StateStore.data.user = { email, token: 'jwt-simulated-' + Date.now() };
+                StateStore.save();
+                document.getElementById('auth-modal').classList.add('hidden');
+                Logger.log('AUTH', `User ${email} erfolgreich eingeloggt.`, 'text-emerald-400');
+            },
+            logout() {
+                StateStore.data.user = null;
+                StateStore.save();
+                document.getElementById('auth-modal').classList.remove('hidden');
+            }
+        };
+
+        // BANKING GATEWAY MODULE
+        const BankingGateway = {
+            saveCard() {
+                const name = document.getElementById('card-input-name').value;
+                const num = document.getElementById('card-input-num').value;
+                StateStore.data.card = { connected: true, holderName: name, cardNumber: num };
+                StateStore.save();
+                document.getElementById('header-card-text').innerText = `Karte: ...${num.slice(-6)}`;
+                Logger.log('GATEWAY', 'Bankkarte aktualisiert & validiert.', 'text-emerald-400');
+            }
+        };
+
+        // AI SCREENER MODULE
+        const AIScreener = {
+            pool: [],
+            generate() {
+                const symbols = ['NVDA', 'TSLA', 'AAPL', 'BTCUSD', 'ETHUSD', 'MSFT'];
+                this.pool = symbols.map(sym => ({
+                    symbol: sym,
+                    pattern: 'Bull Flag Ausbruch',
+                    price: +(Math.random() * 200 + 50).toFixed(2),
+                    signal: Math.random() > 0.4 ? 'BUY' : 'SELL',
+                    probability: Math.floor(Math.random() * 25 + 70)
+                }));
+                this.render();
+            },
+            render() {
+                const tbody = document.getElementById('screener-tbody');
+                tbody.innerHTML = this.pool.map(item => `
+                    <tr>
+                        <td class="py-2 px-3 font-bold text-white">${item.symbol}</td>
+                        <td class="py-2 px-3 text-tvTextMuted">${item.pattern}</td>
+                        <td class="py-2 px-3 text-right">$${item.price}</td>
+                        <td class="py-2 px-3 text-center ${item.signal === 'BUY' ? 'text-tvBullish' : 'text-tvBearish'}">${item.signal}</td>
+                        <td class="py-2 px-3 text-right font-bold">${item.probability}%</td>
+                    </tr>
+                `).join('');
+            }
+        };
+
+        // AUTO TRADER ENGINE MODULE
+        const AutoTrader = {
+            active: true,
+            loop: null,
+            init() {
+                this.start();
+            },
+            toggle() {
+                this.active = !this.active;
+                const btnText = document.getElementById('bot-status-text');
+                btnText.innerText = this.active ? "AUTOTRADER: AKTIV" : "AUTOTRADER: PAUSIERT";
+                Logger.log('BOT', `Autotrader Status: ${this.active ? 'Resumed' : 'Paused'}`, this.active ? 'text-tvBullish' : 'text-tvBearish');
+            },
+            updateReserveLimit(val) {
+                StateStore.data.portfolio.reserveLimit = parseFloat(val);
+                document.getElementById('cfg-reserve-val-disp').innerText = `$${parseFloat(val).toFixed(2)}`;
+                StateStore.save();
+                this.updateUI();
+            },
+            start() {
+                if (this.loop) clearInterval(this.loop);
+                this.loop = setInterval(() => {
+                    if (this.active) {
+                        AIScreener.generate();
+                        this.updateUI();
+                    }
+                }, 4000);
+            },
+            closeAll() {
+                StateStore.data.positions = [];
+                StateStore.save();
+                this.updateUI();
+                Logger.log('TRADER', 'Alle aktiven Positionen manuell geschlossen.', 'text-rose-400');
+            },
+            updateUI() {
+                const p = StateStore.data.portfolio;
+                const totalEquity = p.deposit + p.invested;
+                document.getElementById('stat-total-equity').innerText = `$${totalEquity.toFixed(2)}`;
+                document.getElementById('stat-free-deposit').innerText = `$${p.deposit.toFixed(2)}`;
+                document.getElementById('stat-reserve-limit').innerText = `$${p.reserveLimit.toFixed(2)}`;
+                document.getElementById('stat-invested').innerText = `$${p.invested.toFixed(2)}`;
+                document.getElementById('stat-realized-pnl').innerText = `+$${p.realizedPnL.toFixed(2)}`;
+            }
+        };
+
+        // WEBSOCKET CLIENT SIMULATOR (FOR SERVER REALTIME FEED)
+        const WebSocketClient = {
+            connect(url = 'wss://simulated.stockvision.internal/feed') {
+                Logger.log('WEBSOCKET', `Verbindung hergestellt zu ${url}`, 'text-blue-400');
+            }
+        };
+
+        // INITIALIZATION ENTRY POINT
+        window.onload = function() {
+            StateStore.init();
+            AuthManager.init();
+            AIScreener.generate();
+            AutoTrader.init();
+            WebSocketClient.connect();
+
+            Logger.log('SYSTEM', 'StockVision Enterprise Suite v5.0 gestartet.', 'text-tvAccent');
+            Logger.log('SANDBOX', 'Bank-Karten-Sandbox aktiv. Zero Access für KI.', 'text-emerald-400');
+        };
+    </script>
+</body>
+</html>
